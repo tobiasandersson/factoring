@@ -8,7 +8,7 @@ public class Main {
 
 	private BufferedReader in;
 	private PollardRho pollardRho;
-	
+
 	public Main() {
 		in = new BufferedReader(new InputStreamReader(System.in));
 		pollardRho = new PollardRho();
@@ -24,7 +24,7 @@ public class Main {
 		}
 		System.out.println(sb.toString());
 	}
-	
+
 	private List<BigInteger> factorize(BigInteger n) {
 		return pollardRho.factorize(n);
 	}
