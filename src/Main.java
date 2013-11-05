@@ -4,43 +4,44 @@ import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.List;
 
-
 public class Main {
-	
+
 	private BufferedReader in;
-	
+
 	public Main() {
 		in = new BufferedReader(new InputStreamReader(System.in));
 	}
-	
+
 	public static void main(String[] args) {
 		Main main = new Main();
 		String line = main.read();
+		StringBuilder sb = new StringBuilder();
 		while (line != null) {
-			printFactors(factorize(new BigInteger(line)));
+			getFactors(factorize(new BigInteger(line)), sb);
 			line = main.read();
 		}
+		System.out.println(sb.toString());
 	}
-	
+
 	private static List<BigInteger> factorize(BigInteger n) {
 		return PollardRho.factorize(n);
 	}
 
-	private static void printFactors(List<BigInteger> factors) {
-		if(factors == null) {
-			System.out.println("fail");
+	private static void getFactors(List<BigInteger> factors, StringBuilder sb) {
+		if (factors == null) {
+			sb.append("fail\n");
 		} else {
-			for(BigInteger factor: factors) {
-				System.out.println(factor);
+			for (BigInteger factor : factors) {
+				sb.append(factor).append('\n');
 			}
 		}
-		System.out.println();
+		sb.append('\n');
 	}
 
 	private String read() {
 		String line = null;
 		try {
-			if(in.ready()) 
+			if (in.ready())
 				line = in.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
