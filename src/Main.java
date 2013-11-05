@@ -8,22 +8,24 @@ import java.util.List;
 public class Main {
 	
 	private BufferedReader in;
+	private PollardRho pollardRho;
 	
 	public Main() {
 		in = new BufferedReader(new InputStreamReader(System.in));
+		pollardRho = new PollardRho();
 	}
 	
 	public static void main(String[] args) {
 		Main main = new Main();
 		String line = main.read();
 		while (line != null) {
-			printFactors(factorize(new BigInteger(line)));
+			printFactors(main.factorize(new BigInteger(line)));
 			line = main.read();
 		}
 	}
 	
-	private static List<BigInteger> factorize(BigInteger n) {
-		return PollardRho.factorize(n);
+	private List<BigInteger> factorize(BigInteger n) {
+		return pollardRho.factorize(n);
 	}
 
 	private static void printFactors(List<BigInteger> factors) {
