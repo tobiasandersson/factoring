@@ -9,7 +9,8 @@ public class PollardRho {
 
 	private static final int CERTAINTY = 10;
 	private static final int FACTORIZATIONS = 100;
-	private static final int TIME_LIMIT = 15 * 1000 + 1500;
+	private static final int TIME_LIMIT = 15 * 1000 + 5000;
+	private static final int MAX_BIT_LENGTH = 95;
 	private long finalDeadline;
 	private int factorizationsLeft;
 
@@ -23,21 +24,39 @@ public class PollardRho {
 		factorizationsLeft--;
 
 		List<BigInteger> factors = new ArrayList<BigInteger>();
-
 		if (n.isProbablePrime(CERTAINTY)) {
 			factors.add(n);
 			return factors;
 		}
+		
 		Queue<BigInteger> queue = new LinkedList<BigInteger>();
-
 		queue.add(n);
+		
+		boolean possiblePow = true;
+		
 		while (!queue.isEmpty()) {
 			BigInteger current = queue.poll();
-			BigInteger factor = trialDivision(current);
+			BigInteger factor = null;
+			
+			if(possiblePow && !factors.isEmpty()) {
+				factor = tryPow(current, factors.get(0));
+				if(factor == null) {
+					possiblePow = false;
+				}
+			}
+			
+			if(factor == null) {
+				factor = trialDivision(current);
+			}
+			
 
 			if (factor != null) {
 				factors.add(factor);
 			} else {
+				if (current.bitLength() > MAX_BIT_LENGTH) {
+					return null;
+				}
+
 				factor = brentPollardRho(current, deadline);
 
 				if (factor == null) {
@@ -147,9 +166,20 @@ public class PollardRho {
 
 	private BigInteger trialDivision(BigInteger n) {
 		for (int p : Constants.PRIMES) {
+			if(n.compareTo(BigInteger.valueOf(p)) < 0	) {
+				return null;
+			}
 			if (n.mod(BigInteger.valueOf(p)).equals(BigInteger.ZERO)) {
 				return (BigInteger.valueOf(p));
 			}
+		}
+		return null;
+	}
+	
+
+	private BigInteger tryPow(BigInteger current, BigInteger factor) {
+		if(current.mod(factor).equals(BigInteger.ZERO)) {
+			return factor;
 		}
 		return null;
 	}
