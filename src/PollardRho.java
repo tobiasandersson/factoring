@@ -9,7 +9,7 @@ public class PollardRho {
 
 	private static final int CERTAINTY = 10;
 	private static final int FACTORIZATIONS = 100;
-	private static final int TIME_LIMIT = 15 * 1000;
+	private static final int TIME_LIMIT = 15 * 1000 + 1500;
 	private long finalDeadline;
 	private int factorizationsLeft;
 
@@ -33,13 +33,18 @@ public class PollardRho {
 		queue.add(n);
 		while (!queue.isEmpty()) {
 			BigInteger current = queue.poll();
-			BigInteger factor = brentPollardRho(current, deadline);
-			if (factor == null) {
+			BigInteger factor;
 
+			factor = brentPollardRho(current, deadline);
+
+			if (factor == null) {
 				return null;
 			}
 
-			factors.add(factor);
+			if (factor.isProbablePrime(CERTAINTY))
+				factors.add(factor);
+			else
+				queue.add(factor);
 
 			if (current.divide(factor).isProbablePrime(CERTAINTY)) {
 				factors.add(current.divide(factor));
@@ -75,7 +80,7 @@ public class PollardRho {
 
 	private BigInteger brentPollardRho(BigInteger n, long deadline) {
 		BigInteger res = trialDivision(n);
-		
+
 		if (res != null) {
 			return res;
 		}
@@ -91,7 +96,7 @@ public class PollardRho {
 		BigInteger r = BigInteger.ONE;
 		BigInteger q = BigInteger.ONE;
 
-		while (g.equals(BigInteger.ONE)) {
+		while (g.compareTo(BigInteger.ONE) <= 0) {
 			if (System.currentTimeMillis() >= deadline) {
 				return null;
 			}
@@ -102,8 +107,8 @@ public class PollardRho {
 			}
 
 			BigInteger k = BigInteger.ZERO;
-			
-			while (k.compareTo(r) < 0 && g.equals(BigInteger.ONE)) {
+
+			while (k.compareTo(r) < 0 && g.compareTo(BigInteger.ONE) <= 0) {
 				ys = y;
 				for (int i = 0; i < m.min(r.subtract(k)).intValue(); i++) {
 					y = func(y, c, n);
@@ -126,7 +131,11 @@ public class PollardRho {
 					break;
 			}
 		}
-		return g;
+		if (g.equals(n)) {
+			return null;
+		} else {
+			return g;
+		}
 	}
 
 	public BigInteger randomBigInteger(BigInteger n) {
