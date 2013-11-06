@@ -33,18 +33,22 @@ public class PollardRho {
 		queue.add(n);
 		while (!queue.isEmpty()) {
 			BigInteger current = queue.poll();
-			BigInteger factor;
+			BigInteger factor = trialDivision(current);
 
-			factor = brentPollardRho(current, deadline);
-
-			if (factor == null) {
-				return null;
-			}
-
-			if (factor.isProbablePrime(CERTAINTY))
+			if (factor != null) {
 				factors.add(factor);
-			else
-				queue.add(factor);
+			} else {
+				factor = brentPollardRho(current, deadline);
+
+				if (factor == null) {
+					return null;
+				}
+
+				if (factor.isProbablePrime(CERTAINTY))
+					factors.add(factor);
+				else
+					queue.add(factor);
+			}
 
 			if (current.divide(factor).isProbablePrime(CERTAINTY)) {
 				factors.add(current.divide(factor));
@@ -55,36 +59,7 @@ public class PollardRho {
 		return factors;
 	}
 
-	private BigInteger pollardRho(BigInteger n, long deadline) {
-		BigInteger res = trialDivision(n);
-		if (res != null) {
-			return res;
-		}
-		BigInteger x = BigInteger.valueOf(2);
-		BigInteger y = BigInteger.valueOf(2);
-		BigInteger g = BigInteger.ONE;
-		while (g.equals(BigInteger.ONE)) {
-			if (System.currentTimeMillis() >= deadline) {
-				return null;
-			}
-			x = f(x, n);
-			y = f(f(y, n), n);
-			g = n.gcd(x.subtract(y));
-		}
-		if (g.equals(n)) {
-			return null;
-		} else {
-			return g;
-		}
-	}
-
 	private BigInteger brentPollardRho(BigInteger n, long deadline) {
-		BigInteger res = trialDivision(n);
-
-		if (res != null) {
-			return res;
-		}
-
 		BigInteger ys = BigInteger.ZERO;
 		BigInteger x = BigInteger.ZERO;
 
@@ -130,6 +105,29 @@ public class PollardRho {
 				if (g.compareTo(BigInteger.ONE) > 0)
 					break;
 			}
+		}
+		if (g.equals(n)) {
+			return null;
+		} else {
+			return g;
+		}
+	}
+
+	private BigInteger pollardRho(BigInteger n, long deadline) {
+		BigInteger res = trialDivision(n);
+		if (res != null) {
+			return res;
+		}
+		BigInteger x = BigInteger.valueOf(2);
+		BigInteger y = BigInteger.valueOf(2);
+		BigInteger g = BigInteger.ONE;
+		while (g.equals(BigInteger.ONE)) {
+			if (System.currentTimeMillis() >= deadline) {
+				return null;
+			}
+			x = f(x, n);
+			y = f(f(y, n), n);
+			g = n.gcd(x.subtract(y));
 		}
 		if (g.equals(n)) {
 			return null;
