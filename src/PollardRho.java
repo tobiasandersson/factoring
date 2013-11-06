@@ -3,12 +3,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 
 public class PollardRho {
 
 	private static final int CERTAINTY = 10;
 	private static final int FACTORIZATIONS = 100;
-	private static final int TIME_LIMIT = 15 * 1000 + 3000;
+	private static final int TIME_LIMIT = 15 * 1000;
 	private long finalDeadline;
 	private int factorizationsLeft;
 
@@ -32,7 +33,7 @@ public class PollardRho {
 		queue.add(n);
 		while (!queue.isEmpty()) {
 			BigInteger current = queue.poll();
-			BigInteger factor = pollardRho(current, deadline);
+			BigInteger factor = brentPollardRho(current, deadline);
 			if (factor == null) {
 
 				return null;
@@ -54,23 +55,87 @@ public class PollardRho {
 		if (res != null) {
 			return res;
 		}
-
 		BigInteger x = BigInteger.valueOf(2);
 		BigInteger y = BigInteger.valueOf(2);
-		BigInteger d = BigInteger.ONE;
-		while (d.equals(BigInteger.ONE)) {
+		BigInteger g = BigInteger.ONE;
+		while (g.equals(BigInteger.ONE)) {
 			if (System.currentTimeMillis() >= deadline) {
 				return null;
 			}
 			x = f(x, n);
 			y = f(f(y, n), n);
-			d = n.gcd(x.subtract(y));
+			g = n.gcd(x.subtract(y));
 		}
-		if (d.equals(n)) {
+		if (g.equals(n)) {
 			return null;
 		} else {
-			return d;
+			return g;
 		}
+	}
+
+	private BigInteger brentPollardRho(BigInteger n, long deadline) {
+		BigInteger res = trialDivision(n);
+		
+		if (res != null) {
+			return res;
+		}
+
+		BigInteger ys = BigInteger.ZERO;
+		BigInteger x = BigInteger.ZERO;
+
+		BigInteger y = randomBigInteger(n);
+		BigInteger c = randomBigInteger(n);
+		BigInteger m = randomBigInteger(n);
+
+		BigInteger g = BigInteger.ONE;
+		BigInteger r = BigInteger.ONE;
+		BigInteger q = BigInteger.ONE;
+
+		while (g.equals(BigInteger.ONE)) {
+			if (System.currentTimeMillis() >= deadline) {
+				return null;
+			}
+			x = y;
+
+			for (int i = 0; i < r.intValue(); i++) {
+				y = func(y, c, n);
+			}
+
+			BigInteger k = BigInteger.ZERO;
+			
+			while (k.compareTo(r) < 0 && g.equals(BigInteger.ONE)) {
+				ys = y;
+				for (int i = 0; i < m.min(r.subtract(k)).intValue(); i++) {
+					y = func(y, c, n);
+					q = q.multiply(x.subtract(y).abs()).mod(n);
+				}
+				g = q.gcd(n);
+				k = k.add(m);
+			}
+
+			r = r.multiply(BigInteger.valueOf(2));
+		}
+		if (g.equals(n)) {
+			while (true) {
+				if (System.currentTimeMillis() >= deadline) {
+					return null;
+				}
+				ys = func(ys, c, n);
+				g = n.gcd(x.subtract(ys).abs());
+				if (g.compareTo(BigInteger.ONE) > 0)
+					break;
+			}
+		}
+		return g;
+	}
+
+	public BigInteger randomBigInteger(BigInteger n) {
+		Random rand = new Random();
+		BigInteger result = new BigInteger(n.bitLength(), rand);
+		while (result.compareTo(n) > 0) {
+			result = new BigInteger(n.bitLength(), rand);
+		}
+		return result;
 	}
 
 	private BigInteger trialDivision(BigInteger n) {
@@ -84,6 +149,10 @@ public class PollardRho {
 
 	private BigInteger f(BigInteger x, BigInteger n) {
 		return x.pow(2).subtract(BigInteger.ONE).mod(n);
+	}
+
+	private BigInteger func(BigInteger y, BigInteger c, BigInteger n) {
+		return y.pow(2).mod(n).add(c).mod(n);
 	}
 
 	public static void main(String[] args) {
